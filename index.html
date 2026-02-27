@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Illuma</title>
+    <meta charset="utf-8">
+    <meta name="description" content="Illuma model viewer">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Keep your external css if you want -->
+    <link type="text/css" href="./styles.css" rel="stylesheet"/>
+
+    <!-- Inline CSS so everything is in ONE HTML file (reference-style layout) -->
+    <style>
+      html, body { height: 100%; margin: 0; }
+      body { background:#f2f2f2; }
+
+      /* Make the viewer fill the viewport like a product customiser page */
+      model-viewer{
+        width: 100vw;
+        height: 100vh;
+        display:block;
+        background:#d9d9d9; /* your grey stage */
+        position:relative;
+      }
+
+      /* Top centered title (like "CHOOSE YOUR MATERIAL" -> Illuma) */
+      .page-title{
+        position:absolute;
+        top:20px;
+        left:0; right:0;
+        text-align:center;
+        font-size:30px;
+        letter-spacing:0.28em;
+        font-weight:600;
+        color:#111;
+        opacity:0.75;
+        pointer-events:none;
+      }
+
+      /* Side rails (left = animation, right = variants) */
+      .side{
+        position:absolute;
+        top:120px;
+        width:210px;
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+      }
+      .side.left{ left:24px; align-items:flex-start; }
+      .side.right{ right:24px; align-items:flex-end; }
+
+      .side .label{
+        font-size:12px;
+        letter-spacing:0.12em;
+        opacity:0.7;
+        margin-bottom:6px;
+      }
+
+      .group{
+        width:210px;
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+      }
+      .group-title{
+        font-size:12px;
+        opacity:0.65;
+        margin:6px 0 2px;
+      }
+
+      /* Button style: clean, small, “product UI” */
+      .ui-btn{
+        border:1px solid rgba(0,0,0,0.18);
+        background:#fff;
+        padding:10px 12px;
+        border-radius:999px;
+        cursor:pointer;
+        font-size:12px;
+        line-height:1;
+      }
+      .ui-btn:hover{ border-color: rgba(0,0,0,0.35); }
+
+      /* Bottom camera controls centered */
+      .bottom-bar{
+        position:absolute;
+        left:0; right:0;
+        bottom:18px;
+        display:flex;
+        justify-content:center;
+        gap:10px;
+        pointer-events:auto;
+      }
+
+      /* Hotspot styling (basic, you can keep your original in styles.css too) */
+      .Hotspot{
+        background: rgba(255,255,255,0.9);
+        border: 1px solid rgba(0,0,0,0.2);
+        border-radius: 999px;
+        width: 28px;
+        height: 28px;
+        cursor: pointer;
+      }
+      .HotspotAnnotation{
+        position:absolute;
+        transform: translate(32px, -8px);
+        background: rgba(0,0,0,0.75);
+        color: white;
+        padding: 6px 8px;
+        border-radius: 8px;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      /* Optional: keep AR button from covering your UI */
+      #ar-button{
+        position:absolute;
+        left: 24px;
+        bottom: 80px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <model-viewer
+      src="assignment.glb"
+      ar
+      ar-modes="scene-viewer webxr quick-look"
+      camera-controls
+      tone-mapping="neutral"
+      poster="poster.png"
+      shadow-intensity="1"
+      animation-name="Exploded"
+      camera-orbit="28.15deg 73.38deg 0.6975m"
+      field-of-view="30deg"
+      id="gear"
+    >
+
+      <!-- Title -->
+      <div class="page-title">ILLUMA</div>
+
+      <!-- Hotspots (yours, unchanged) -->
+      <button class="Hotspot" slot="hotspot-1"
+        data-surface="8 0 780 781 782 0.593 0.256 0.151"
+        data-visibility-attribute="visible"
+        onMouseOver="addhotspot1()" onMouseOut="removehotspot1()">
+        <div class="HotspotAnnotation" id="hotspot1" style="visibility:hidden">body</div>
+      </button>
+
+      <button class="Hotspot" slot="hotspot-2"
+        data-surface="4 0 1890 1891 1892 0.036 0.859 0.105"
+        data-visibility-attribute="visible"
+        onMouseOver="addhotspot2()" onMouseOut="removehotspot2()">
+        <div class="HotspotAnnotation" id="hotspot2" style="visibility:hidden">handle</div>
+      </button>
+
+      <button class="Hotspot" slot="hotspot-3"
+        data-surface="1 0 1179 1180 1181 0.580 0.380 0.040"
+        data-visibility-attribute="visible"
+        onMouseOver="addhotspot3()" onMouseOut="removehotspot3()">
+        <div class="HotspotAnnotation" id="hotspot3" style="visibility:hidden">base</div>
+      </button>
+
+      <button class="Hotspot" slot="hotspot-4"
+        data-surface="0 0 4509 4510 4511 0.534 0.038 0.429"
+        data-visibility-attribute="visible"
+        onMouseOver="addhotspot4()" onMouseOut="removehotspot4()">
+        <div class="HotspotAnnotation" id="hotspot4" style="visibility:hidden">disc</div>
+      </button>
+
+      <!-- Progress / AR prompt (yours) -->
+      <div class="progress-bar hide" slot="progress-bar">
+        <div class="update-bar"></div>
+      </div>
+
+      <button slot="ar-button" id="ar-button">View in your space</button>
+
+      <div id="ar-prompt">
+        <img src="ar_hand_prompt.png">
+      </div>
+
+      <!-- LEFT: Animation (reference-style left rail) -->
+      <div class="side left">
+        <div class="label">ANIMATION</div>
+        <button class="ui-btn" id="default1Btn" onClick="Btn01()">Handle Down</button>
+        <button class="ui-btn" id="default2Btn" onClick="Btn02()">Disc In</button>
+        <button class="ui-btn" id="default3Btn" onClick="Btn03()">Exploded</button>
+        <button class="ui-btn" id="pauseBtn" onClick="pauseAnimation()">Pause</button>
+      </div>
+
+      <!-- RIGHT: Variants (Body + Disc grouped, like reference right rail) -->
+      <div class="side right">
+        <div class="label">VARIANTS</div>
+
+        <div class="group">
+          <div class="group-title">Body</div>
+          <button class="ui-btn" onClick="VBtn03()">Natural Oak</button>
+          <button class="ui-btn" onClick="VBtn04()">Soft Sand</button>
+          <button class="ui-btn" onClick="VBtn05()">Seafoam Mint</button>
+        </div>
+
+        <div class="group">
+          <div class="group-title">Disc</div>
+          <button class="ui-btn" onClick="VBtn01()">Opaque</button>
+          <button class="ui-btn" onClick="VBtn02()">Frosted</button>
+        </div>
+      </div>
+
+      <!-- BOTTOM: Camera viewpoints (reference-style bottom controls) -->
+      <div class="bottom-bar">
+        <button class="ui-btn" onClick="setOrbit('-0.04233deg 5.067deg 0.6975m')">Top</button>
+        <button class="ui-btn" onClick="setOrbit('-2.211deg 85.85deg 0.6975m')">Front</button>
+        <button class="ui-btn" onClick="setOrbit('176.7deg 83.49deg 0.6975m')">Back</button>
+        <button class="ui-btn" onClick="setOrbit('69.35deg 85.66deg 0.6975m')">Disc</button>
+      </div>
+
+    </model-viewer>
+
+    <!-- Your existing JS (kept, but fixed the broken Animation div issue by removing it) -->
+    <script>
+      function setOrbit(orbit){
+        document.getElementById('gear').cameraOrbit = orbit;
+      }
+    </script>
+
+    <script>
+      function addhotspot1(){ document.getElementById("hotspot1").style.visibility="visible"; }
+      function removehotspot1(){ document.getElementById("hotspot1").style.visibility="hidden"; }
+
+      function addhotspot2(){ document.getElementById("hotspot2").style.visibility="visible"; }
+      function removehotspot2(){ document.getElementById("hotspot2").style.visibility="hidden"; }
+
+      function addhotspot3(){ document.getElementById("hotspot3").style.visibility="visible"; }
+      function removehotspot3(){ document.getElementById("hotspot3").style.visibility="hidden"; }
+
+      function addhotspot4(){ document.getElementById("hotspot4").style.visibility="visible"; }
+      function removehotspot4(){ document.getElementById("hotspot4").style.visibility="hidden"; }
+    </script>
+
+    <script>
+      function VBtn01(){ document.getElementById('gear').variantName = "Disc_opaque"; }
+      function VBtn02(){ document.getElementById('gear').variantName = "Disc_frosted"; }
+      function VBtn03(){ document.getElementById('gear').variantName = "Natural Oak"; }
+      function VBtn04(){ document.getElementById('gear').variantName = "Soft Sand"; }
+      function VBtn05(){ document.getElementById('gear').variantName = "Seafoam Mint"; }
+    </script>
+
+    <script>
+      function Btn01(){
+        const mv = document.getElementById('gear');
+        mv.pause();
+        mv.animationName = "Handle Down";
+        mv.play();
+      }
+
+      function Btn02(){
+        const mv = document.getElementById('gear');
+        mv.pause();
+        mv.animationName = "Disc In";
+        mv.play();
+      }
+
+      function Btn03(){
+        const mv = document.getElementById('gear');
+        mv.pause();
+        mv.animationName = "Exploded";
+        mv.play();
+      }
+
+      function pauseAnimation(){
+        document.getElementById('gear').pause();
+      }
+    </script>
+
+    <!-- Loads <model-viewer> -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+  </body>
+</html>
